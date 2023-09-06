@@ -136,7 +136,7 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 
 ## Commits
 
-Ejercicio 1
+Ejercicio 1 6543e2821c23e9470078828659e321213858f2d0
 Ejercicio 1.1
 Ejercicio 2
 Ejercicio 3
@@ -148,4 +148,16 @@ Ejercicio 8
 
 ## Ejercicio 1
 
-Para este ejercicio se agregó otro contenedor llamado client2 en el archivo docker-compose-dev.yaml. Cuando se levantan los contenedores se crea un segundo cliente que interactúa con el EchoServer
+Para este ejercicio se agregó otro contenedor llamado client2 en el archivo **docker-compose-dev.yaml**. Cuando se levantan los contenedores se crea un segundo cliente que interactúa con el EchoServer
+
+## Ejercicio 1.1
+
+Se agrego un archivo en Python llamado **docker-compose-maker.py**. Este archivo recibe un numero entero N mayor a 0 y genera un docker compose con N clientes. Si recibe un numero igual o menor a 0 o cualquier otro valor va a lanzar un error.
+
+Para ejecutarlo se debe correr la siguiente linea:
+
+```
+python3 docker-compose-maker -n N
+```
+
+Donde N es el numero de clientes a crear
