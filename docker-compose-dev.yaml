@@ -14,6 +14,18 @@ services:
     volumes:
       - ./server/config.ini:/config.ini
   
+  test-server:
+    container_name: test-server
+    image: test-server:latest
+    entrypoint:  /test-server.sh
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+    networks:
+      - testing_net
+    depends_on:
+      - server
+
   client1:
     container_name: client1
     image: client:latest

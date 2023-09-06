@@ -138,7 +138,7 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 
 Ejercicio 1 6543e2821c23e9470078828659e321213858f2d0 <br />
 Ejercicio 1.1 e49fc7fb0a04f4a41963c0bdd6a846ec3b2e93e0<br />
-Ejercicio 2 <br />
+Ejercicio 2 04c65ce0797b182b7c8d48f74aca85e9ae916763<br />
 Ejercicio 3 <br />
 Ejercicio 4 <br />
 Ejercicio 5 <br />
@@ -165,4 +165,13 @@ Donde N es el numero de clientes a crear
 ## Ejercicio 2
 
 En el **docker-compose-dev.yaml** se agregaron volumes para vincular los archivos **config.yaml** y **config.ini** con sus respectivas copias en los contenedores correspondientes.
+
 Para demostrarlo se puede levantar ambos contenedores y esperar a que el cliente finalice su ejecución. Luego se puede editar el archivo **config.yaml** y hacer que el puerto con el que se comunica el cliente es 12346 y luego hacer un **docker start client1** para levantar de vuelta al cliente. Se puede comprobar que el cliente ahora no se puede conectar con el servidor por lo que se verifica ahora se puede editar los archivos de configuración en los contenedores sin necesidad de buildear devuelta.
+
+
+## Ejercicio 3
+
+Se agregó un nuevo contenedor llamado **test-server**. Este contenedor esta conectado a la misma network que **server** y **client1**. **test-server** ejecutar un script **test-server.sh** que corre un bucle infinito. En cada ciclo consulta por si el servidor está caído, duerme 5 segundos y luego vuelve a consultar.
+
+Para demostrarlo se puede levantar los 3 contenedores y comprobar que **test-server** indica que el server está levantado. Luego hacer un **docker stop server** y comprobar que el servidor está caído.
+
