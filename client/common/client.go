@@ -52,6 +52,7 @@ func (c *Client) createClientSocket() error {
 func (c *Client) StartClientLoop() {
 	// autoincremental msgID to identify every message sent
 	msgID := 1
+	time.Sleep(8 * time.Second)
 
 loop:
 	// Send messages if the loopLapse threshold has not been surpassed
