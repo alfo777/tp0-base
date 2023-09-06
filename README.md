@@ -139,7 +139,7 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 Ejercicio 1 6543e2821c23e9470078828659e321213858f2d0 <br />
 Ejercicio 1.1 e49fc7fb0a04f4a41963c0bdd6a846ec3b2e93e0<br />
 Ejercicio 2 04c65ce0797b182b7c8d48f74aca85e9ae916763<br />
-Ejercicio 3 <br />
+Ejercicio 3 9fa6cb988a992b7ee5c8df28d6a79c7970e62505<br />
 Ejercicio 4 <br />
 Ejercicio 5 <br />
 Ejercicio 6 <br />
