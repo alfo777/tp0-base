@@ -1,9 +1,9 @@
 # TP0: Docker + Comunicaciones + Concurrencia
 
-# Nombre: Alfonso Javier
-# Apellido: Amezqueta
-# Padron: 94732
-# Materia: Sistemas Distribuidos, segundo cuatrimestre.
+## Nombre: Alfonso Javier
+## Apellido: Amezqueta
+## Padron: 94732
+## Materia: Sistemas Distribuidos, segundo cuatrimestre.
 
 ## Resolución
 
@@ -13,11 +13,30 @@ Ejercicio 1 6543e2821c23e9470078828659e321213858f2d0 <br />
 Ejercicio 1.1 e49fc7fb0a04f4a41963c0bdd6a846ec3b2e93e0<br />
 Ejercicio 2 04c65ce0797b182b7c8d48f74aca85e9ae916763<br />
 Ejercicio 3 9fa6cb988a992b7ee5c8df28d6a79c7970e62505<br />
-Ejercicio 4 <br />
-Ejercicio 5 <br />
-Ejercicio 6 <br />
-Ejercicio 7 <br />
-Ejercicio 8 <br />
+Ejercicio 4 fbf8febefbf6417008d958b627d255272891492f<br />
+Ejercicio 5 8d0c3b100e42159b083e97756c30f27737b09f68<br />
+Ejercicio 6 ebc785392b6eb53f6c6418972111c8c5dad7682b<br />
+Ejercicio 7 98da5df17fb556a145b0b33d07ff6dfea0754fc8<br />
+Ejercicio 8 4e60faaeb4fb838a20cc19b117c164d141e5b7d7<br />
+
+## Ejecución
+
+Todos contenedores se ejecutan con:
+```
+make docker-compose-up
+```
+
+Para poder ver los logs de ejecución:
+```
+make docker-compose-logs
+```
+
+Por ultimo para detener y borrar los contenedores se ejecuta:
+Todos contenedores se ejecutan con:
+```
+make docker-compose-down
+```
+
 
 ## Ejercicio 1
 
