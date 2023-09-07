@@ -1,7 +1,11 @@
 from .utils import Bet
 from .utils import process_bet
+from .utils import generate_winners_message
+from .utils import do_lottery
 import socket
 import logging
+
+CANT_AGENCIES = 5
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -11,6 +15,7 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._sigterm_recv = False
         self._connections = []
+        self._lotery_result = None
 
 
     def run(self):
@@ -27,7 +32,7 @@ class Server:
         while not self._sigterm_recv:
             try:
                 self.__accept_new_connection()
-                if ( len(self._connections) == 5 ):
+                if ( len(self._connections) == CANT_AGENCIES ):
                     self.process_clients()
                 # self.__handle_client_connection(client_sock)
             except OSError as e:
@@ -51,6 +56,7 @@ class Server:
                 addr = client_sock.getpeername()
                 if msg != "DONE":
                     logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]} | message number: {n}')
+                    logging.info(f'action: processing_batch_message | result: pending | ip: {addr[0]} | message number: {n}')
                     result = process_bet(msg)
                     if result == None:
                         self._terminate_all_connections()
@@ -106,8 +112,38 @@ class Server:
             self.__handle_client_connection(c)
         
         for c in self._connections:
-            c.send(self.send_res("DONE").encode('utf-8'))
+            c.send(self.send_res("START_LOTTERY").encode('utf-8'))
+
+        logging.info('action: lottery | result: pending')
+        
+        self._lottery_result = do_lottery()
+        
+        logging.info('action: lottery | result: success')
+
+        for c in self._connections:
+            self.__handle_client_winners(c)
+        
+        logging.info('action: closing | result: pending')
+
+        for c in self._connections:
             c.close()
+        
+        logging.info('action: closed | result: success')
+
+    """signal that the winners can be requested and send the to its  agency"""
+    def __handle_client_winners(self, client_sock):
+        try:
+            addr = client_sock.getpeername()
+            client_sock.send(self.send_res("READY").encode('utf-8'))
+            msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
+            logging.info(f'action: ready_message_sent | result: success | ip: {addr[0]}')
+            agency = int(msg[0])
+            winners = self._lottery_result.get_agency_winners(agency)
+            client_sock.send(self.send_res(generate_winners_message(winners)).encode('utf-8'))
+        
+        except OSError as e:
+            logging.error("action: receive_bet_message | result: fail | error: {e}")
+
 
     def _terminate_all_connections(self):
         for c in self._connections:

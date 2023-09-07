@@ -148,3 +148,26 @@ Una representación de protocolo se puede ver en la siguiente imagen:
 ![Alt text](img/exercise-6.png)
 
 
+## Ejercicio 7
+
+En este ejercicio se extiende el protocolo usado en el ejercicio 6 y se agregan dos nuevos pasos:
+
+### Paso 3: El servidor realiza la loteria:
+
+El servidor envia el mensaje START_LOTTERY a todos los clientes. Luego el servidor realiza la loteria y obtiene un resultado con los ganadores de las apuestas.
+
+### Paso 4: El servidor informa a los ganadores de la loteria:
+
+El servidor envia un mensaje READY a el primer cliente al que se conecto. El cliente envia en mensaje REQUEST_WINNERS a el servidor el cual unicamente contiene la id de la agencia a la que pertenece el cliente. El servidor identifica al cliente y le manda un mensaje que contiene la lista de los Documentos los ganadores de la loteria.
+
+El mensaje con los documentos correspondientes tiene la siguiente forma:
+
+(largo del documento) + (documento)
+
+Un ejemplo del mensaje seria el siguiente:
+
+![Alt text](img/winners.png)
+
+Una representación de protocolo se puede ver en la siguiente imagen:
+
+![Alt text](img/exercise-7.png)

@@ -103,3 +103,42 @@ def parse_client_message(message: str) -> Bet:
         i += str_len
     
     return bets
+
+""" A result with the list of winner fo each agency. """
+class LoteryResult:
+     
+    def __init__(self):
+        """the dict saves pair (agendy_id, winner_list)"""
+        self._winners = {}
+
+
+    def load_winner(self,winner ):
+        """store a winner in the dict"""
+
+        if self._winners.get(winner.agency) == None :
+            self._winners[winner.agency] = []
+
+        self._winners[winner.agency].append(winner.document)
+
+    def get_agency_winners(self, agency):
+        if self._winners.get(agency) == None :
+            return []
+        return self._winners[agency]
+
+"""generate the result of the lotery """
+def do_lottery():
+    result = LoteryResult() 
+    bets = load_bets()
+    for bet in bets:
+        if has_won(bet):
+            result.load_winner(bet)
+
+    return result
+
+"""generate winners message for a agency"""
+def generate_winners_message(winners):
+    message = ""
+    for document in winners:
+        message = message + str(len(document)) + document
+    
+    return message

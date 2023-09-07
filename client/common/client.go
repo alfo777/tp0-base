@@ -62,7 +62,7 @@ func readFile(id string) [][]string {
 func createBetList(data [][]string, agency string) []Bet {
 	var bets []Bet
     for i, line := range data {
-        if i > 0 { 
+        if i > 0 { // omit header line
 			var bet Bet
 			bet.agency = agency
 			for j, field := range line {
@@ -185,9 +185,25 @@ func recvMessage(c *Client) string {
 	return response
 }
 
+func notifyWinners(message string) {
+	i := 0
+	cant := 0
+	msg := string(message)
+	for i < len(msg) {
+		strLen, _ := strconv.Atoi(string(msg[i]))
+		i += 1
+		dni := message[i : i+strLen]
+		i += strLen
+		cant += 1
+		log.Infof("action: notify_winner | result: success | winner: %s", dni)
+	}
+	log.Infof("action: request_winners | result: success | cant_winners: %v", cant)
+}
+
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
-	time.Sleep( 8 * time.Second)
+	time.Sleep(8 * time.Second)
 loop:
 	// Send messages if the loopLapse threshold has not been surpassed
 	for timeout := time.After(c.config.LoopLapse); ; {
@@ -212,7 +228,6 @@ loop:
 
 		done:= "DONE"
 		done = strings.Join([]string{done, strings.Repeat("X", 8192-len(done))}, "")
-		
 		response := recvMessage(c)
 		nMsg := 0
 
@@ -240,16 +255,34 @@ loop:
 		)
 			
 		log.Infof("action: donde_sent | result: sucess ", )
+		
+		log.Infof("action: batch_stored | result: success | message: %s}", response, )
 
 		response = recvMessage(c)
 
-		if ( response == "" ) {
+		if ( response == "" || response != "START_LOTTERY" ) {
 			return
 		}
 
+		response = recvMessage(c)
+
+		if ( response == "" || response != "READY" ) {
+			return
+		}
+
+		message := strings.Join([]string{c.config.ID, strings.Repeat("X", 8192-len(c.config.ID))}, "")
+
+		fmt.Fprintf(
+			c.conn,
+			message,
+		)
+
+		response = recvMessage(c)
+
+		notifyWinners(response)
+
 		c.conn.Close()
 		
-		log.Infof("action: batch_stored | result: success | message: %s}", response, )
 		break loop
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
