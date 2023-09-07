@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
+	"os"
+	"os/signal"
+	"syscall"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -106,7 +108,15 @@ func main() {
 		LoopLapse:     v.GetDuration("loop.lapse"),
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
-
+	cancelCli := make(chan os.Signal, 1)
+	signal.Notify(cancelCli, syscall.SIGTERM, syscall.SIGINT)
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop()
+	go func() {
+		client.StartClientLoop()
+    }()
+	
+	sig := <-cancelCli
+    log.Printf("action: caugth_signal | result: success | signal: %v", sig)
+	client.CloseGracefully()
+	log.Printf("action: close gracefully | result: success")
 }

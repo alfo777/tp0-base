@@ -175,3 +175,7 @@ Se agregó un nuevo contenedor llamado **test-server**. Este contenedor esta con
 
 Para demostrarlo se puede levantar los 3 contenedores y comprobar que **test-server** indica que el server está levantado. Luego hacer un **docker stop server** y comprobar que el servidor está caído.
 
+## Ejercicio 4
+
+Tanto en el cliente como en el servidor se agregó para que capturen las señales SIGTERM y cierren de manera gracefully. Se puede comprobar haciendo **docker stop server (client1) -t 1**.
+

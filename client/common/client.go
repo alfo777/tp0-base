@@ -21,6 +21,7 @@ type ClientConfig struct {
 type Client struct {
 	config ClientConfig
 	conn   net.Conn
+	close bool
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -28,6 +29,7 @@ type Client struct {
 func NewClient(config ClientConfig) *Client {
 	client := &Client{
 		config: config,
+		close: false,
 	}
 	return client
 }
@@ -46,6 +48,11 @@ func (c *Client) createClientSocket() error {
 	}
 	c.conn = conn
 	return nil
+}
+
+// Close client gracefully
+func (c *Client) CloseGracefully() {
+	c.close = true
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
@@ -77,8 +84,13 @@ loop:
 			msgID,
 		)
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
+		
 		msgID++
 		c.conn.Close()
+
+		if c.close {
+			break loop	
+		}
 
 		if err != nil {
 			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",

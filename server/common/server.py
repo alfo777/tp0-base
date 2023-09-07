@@ -23,8 +23,13 @@ class Server:
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
         while not self._sigterm_recv:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+            try:
+                client_sock = self.__accept_new_connection()
+                self.__handle_client_connection(client_sock)
+            except OSError as e:
+                break
+        if self._sigterm_recv:
+            logging.info('action: exit_gracefully | result: success')
 
     def __handle_client_connection(self, client_sock):
         """
@@ -63,6 +68,6 @@ class Server:
         close server connection gravefully if SIGTERM recieved 
     """
     def exit_gracefully(self, signum, frame):
-        logging.info('action: exit_gracefully_receive | result: prepare_exit_gracefully')
+        logging.info('action: exit_gracefully | result: pending')
         self._sigterm_recv = True
         self._server_socket.close()
