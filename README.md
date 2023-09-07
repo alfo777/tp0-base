@@ -179,3 +179,46 @@ Para demostrarlo se puede levantar los 3 contenedores y comprobar que **test-ser
 
 Tanto en el cliente como en el servidor se agregó para que capturen las señales SIGTERM y cierren de manera gracefully. Se puede comprobar haciendo **docker stop server (client1) -t 1**.
 
+## Ejercicio 5
+
+Se cambió el archivo de docker-compose para que levante 5 clientes, cada cliente representa una agencia de apuestas. En el docker-compose se le envían a los clientes variables de ambiente que corresponden a los datos que contienen las apuestas: nombre, apellido, documento, fecha de nacimiento y número. Cada cliente va a hacer una unica apuesta en este caso.
+
+La protocolo de comunicación entre servidor y cliente se desarrolla de la siguiente manera:
+
+### Paso 1: El cliente genera un mensaje de apuestas y lo envia al servidor
+
+El mensaje de apuesta entre el cliente y el servidor tiene el siguiente formato, dicho formato sera usado en los ejercicios 5, 6 7 y 8 a partir de ahora.
+
+Primero a cada uno de los datos correspondientes a las apuestas se les va a asignar un caracter.
+
+A **Nombre** se le asigna el caracter **N** <br />
+A **Apellido** se le asigna el caracter **A** <br />
+A **Documento** se le asigna el caracter **D** <br />
+A **Fecha de Nacimiento** se le asigna el caracter **B** <br />
+A **Numero** se le asigna el caracter **V** <br />
+
+Cada mensaje que el servidor y el cliente se manden tendra un tamaño de 1024 bytes (para este ejercicio). 
+
+El primer byte que envia el Cliente guarda un numero correspondiente a la id de la agencia de apuestas.
+
+Luego se guarda la informacion correspondiente a la apuesta de la siguiente forma:
+
+(caracter identificado) + (longitud dato) + (dato)
+
+Aclaro que la longitud del dato siempre se va a guardar en un string de longitud 2 por ejemplo si el nombre es **Gabriel** la longitud a guardar es 07, si el nombre es **Santiago Manuel** la longitud a guardar es 15.
+
+Se almacena la informacion de la apuesta una despues de otra y luego se agrega un padding al mensaje hasta completar los 1024 bytes.
+
+Si yo tengo la apuesta para la agencia 1 hecha por Gabriel Fisher, DNI 34567890, 1992-11-21, 12345, entonces el mensajes que se le envia al servidor tiene la siguiente forma:
+
+![Alt text](img/message-example.png)
+
+Si se van a mandar mas de una apuesta entoces la informacion de estas se concatena una despues de otra. 
+
+### Paso 2: El servidor recibe la apuesta, la procesa y le envia un mensaje a el cliente.
+
+El servidor recibe el mensaje de algun cliente, lo guarda en el archivo bets.csv y envia un mensaje con la palabra OK al cliente con padding de letras "X" hasta formar un mensaje de 1024 bytes. Si el servidor tiene algun problema al realizar esta tarea envia un mensaje "ERROR" siguiendo el mismo formato
+
+Una representacion de protocolo se puede ver en la siguiente imagen:
+
+![Alt text](img/exercise-5.png)

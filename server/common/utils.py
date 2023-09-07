@@ -1,6 +1,7 @@
 import csv
 import datetime
 import time
+import logging
 
 
 """ Bets storage location. """
@@ -23,6 +24,18 @@ class Bet:
         self.document = document
         self.birthdate = datetime.date.fromisoformat(birthdate)
         self.number = int(number)
+
+"""this function process the bets sent by clients, if it success then returns client bet """
+def process_bet( message: str) -> Bet:
+    try:
+        bet = parse_client_message(message)
+        bets = [ bet ]
+        store_bets(bets)
+        return bet
+    except Exception as e:
+        logging.info(f'action: process_bet | result: fail | error: {e}')
+        return None 
+
 
 """ Checks whether a bet won the prize or not. """
 def has_won(bet: Bet) -> bool:
@@ -49,3 +62,43 @@ def load_bets() -> list[Bet]:
         for row in reader:
             yield Bet(row[0], row[1], row[2], row[3], row[4], row[5])
 
+"""
+Recieves a message that the client sends to the server and parse it into a bet
+"""
+def parse_client_message(message: str) -> Bet:
+    agency = ""
+    first_name = ""
+    last_name = ""
+    document = ""
+    birthdate = ""
+    number = ""
+    i = 0
+    
+    while ( i < len(message) ):
+        if ( i == 0 ):
+            agency = message[0]
+            i += 1
+        
+        field = message[i]
+        str_len = int(message[i + 1] + message[i + 2] )
+        i += 3
+
+        if ( field == "N" ):
+            first_name = message[i: i + str_len ]
+
+        elif ( field == "L" ):
+            last_name = message[i: i + str_len ]
+
+        elif ( field == "D" ):
+            document = message[i: i + str_len ]
+
+        elif ( field == "B" ):
+            birthdate = message[i: i + str_len ]
+
+        elif ( field == "V" ):
+            number = message[i: i + str_len ]
+            break
+        
+        i += str_len
+    
+    return Bet(agency, first_name, last_name, document, birthdate, number)
