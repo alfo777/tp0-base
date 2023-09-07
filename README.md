@@ -152,22 +152,41 @@ Una representación de protocolo se puede ver en la siguiente imagen:
 
 En este ejercicio se extiende el protocolo usado en el ejercicio 6 y se agregan dos nuevos pasos:
 
-### Paso 3: El servidor realiza la loteria:
 
-El servidor envia el mensaje START_LOTTERY a todos los clientes. Luego el servidor realiza la loteria y obtiene un resultado con los ganadores de las apuestas.
+### Paso 3: El servidor realiza la lotería:
+
+
+El servidor envía el mensaje START_LOTTERY a todos los clientes. Luego el servidor realiza la lotería y obtiene un resultado con los ganadores de las apuestas.
+
 
 ### Paso 4: El servidor informa a los ganadores de la loteria:
 
-El servidor envia un mensaje READY a el primer cliente al que se conecto. El cliente envia en mensaje REQUEST_WINNERS a el servidor el cual unicamente contiene la id de la agencia a la que pertenece el cliente. El servidor identifica al cliente y le manda un mensaje que contiene la lista de los Documentos los ganadores de la loteria.
+
+El servidor envía un mensaje READY al primer cliente al que se conectó. El cliente envía un mensaje REQUEST_WINNERS a el servidor el cual únicamente contiene la id de la agencia a la que pertenece el cliente. El servidor identifica al cliente y le manda un mensaje que contiene la lista de los Documentos los ganadores de la loteria.
+
 
 El mensaje con los documentos correspondientes tiene la siguiente forma:
 
+
 (largo del documento) + (documento)
 
-Un ejemplo del mensaje seria el siguiente:
+
+Un ejemplo del mensaje sería el siguiente:
+
 
 ![Alt text](img/winners.png)
+
 
 Una representación de protocolo se puede ver en la siguiente imagen:
 
 ![Alt text](img/exercise-7.png)
+
+## Ejercicio 8
+
+Para resolver este ejercicio se crearon 5 hilos, uno por cada conexión con un cliente. Cada hilo hace **start()** en el momento en que se tienen las cinco conexiones. El protocolo de comunicación entre cada cliente y su correspondiente hilo sigue siendo el mismo que en el ejercicio 7:
+
+
+![Alt text](img/exercise-8.png)
+
+
+Para manejar la concurrencia entre hilos se utiliza un mismo lock que se adquiere al momento de leer o escribir el archivo bets.csv. Cuando la operación sobre el archivo termina se libera lock.
