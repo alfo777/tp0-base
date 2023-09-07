@@ -187,7 +187,7 @@ func recvMessage(c *Client) string {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
-	
+	time.Sleep( 8 * time.Second)
 loop:
 	// Send messages if the loopLapse threshold has not been surpassed
 	for timeout := time.After(c.config.LoopLapse); ; {

@@ -97,7 +97,7 @@ Se almacena la información de la apuesta una después de otra y luego se agrega
 Si yo tengo la apuesta para la agencia 1 hecha por Gabriel Fisher, DNI 34567890, 1992-11-21, 12345, entonces el mensajes que se le envía al servidor tiene la siguiente forma:
 
 
-![Alt text](img/message-example.png)
+![Alt text](img/message.png)
 
 
 Si se van a mandar más de una apuesta entonces la información de estas se concatena una después de otra.
@@ -106,7 +106,7 @@ Si se van a mandar más de una apuesta entonces la información de estas se conc
 ### Paso 2: El servidor recibe la apuesta, la procesa y le envia un mensaje a el cliente.
 
 
-El servidor recibe el mensaje de algún cliente, lo guarda en el archivo bets.csv y envía un mensaje con la palabra OK al cliente con padding de letras "X" hasta formar un mensaje de 1024 bytes. Si el servidor tiene algún problema al realizar esta tarea envía un mensaje "ERROR" siguiendo el mismo formato
+El servidor recibe el mensaje de algún cliente, lo guarda en el archivo bets.csv y envía un mensaje con la palabra **OK** al cliente con padding de letras "X" hasta formar un mensaje de 1024 bytes. Si el servidor tiene algún problema al realizar esta tarea envía un mensaje **ERROR** siguiendo el mismo formato
 
 
 Una representación de protocolo se puede ver en la siguiente imagen:
@@ -116,26 +116,35 @@ Una representación de protocolo se puede ver en la siguiente imagen:
 
 ## Ejercicio 6
 
-Para este ejercicio y en adelante los clientes leen la informacion de las apuestas desde los archivos correspondientes y se envia el tamaño del batch de cada uno como variable de ambiente desde el docker-compose.yaml.
+Para este ejercicio y en adelante los clientes leen la información de las apuestas desde los archivos correspondientes y se envía el tamaño del batch de cada uno como variable de ambiente desde el **docker-compose.yaml**.
 
-Todos los mensajes que se envian el cliente y el servidor tienen una longitud de 8KB, para todos los mensajes se agrega tambien un padding hasta completar la longitud requerida.
+
+Todos los mensajes que se envían el cliente y el servidor tienen una longitud de 8KB, para todos los mensajes se agrega también un padding hasta completar la longitud requerida.
+
 
 El protocolo usado para este ejercicio es el siguiente:
 
+
 ### Paso 1: El servidor espera por las conexiones:
 
-El servidor espera a tener 5 clientes conectados.
 
-### Paso 2: El cliente envia la informacion de sus apuestas:
+El servidor espera tener 5 clientes conectados.
 
-El servidor toma la primer cliente que se conecto y envia un mensaje de READY. El cliente para este momento ya leyo el archivo csv correspondiente. El cliente toma una cantidad de apuestas correspondientes al tamaño del batch escogido y arma el mensaje de apuestas descripto en el Ejercicio 5. Luego envia el mensaje al servidor el cual guardara las apuestas en el archivo bets.csv
 
-El cliente continua mandando mensajes de apuestas hasta que ya no tiene apuestas para mandar, una vez finalizado envia un mensaje de DONE al servidor.
+### Paso 2: El cliente envía la información de sus apuestas:
 
-El servidor pasa el siguiente cliente y repite el proceso.
 
-na representación de protocolo se puede ver en la siguiente imagen:
+El servidor toma la primer cliente que se conecto y envía un mensaje de **READY**. El cliente para este momento ya leyó el archivo csv correspondiente. El cliente toma una cantidad de apuestas correspondientes al tamaño del batch escogido y arma el mensaje de apuestas descrito en el **Ejercicio 5**. Luego envía el mensaje al servidor el cual guardará las apuestas en el archivo bets.csv
 
+
+El cliente continúa mandando mensajes de apuestas hasta que ya no tiene apuestas para mandar, una vez finalizado envía un mensaje de **DONE** al servidor.
+
+
+El servidor pasa al siguiente cliente y repite el proceso.
+
+
+Una representación de protocolo se puede ver en la siguiente imagen:
 
 ![Alt text](img/exercise-6.png)
+
 
