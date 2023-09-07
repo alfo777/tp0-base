@@ -18,11 +18,7 @@ services:
     environment:
       - CLI_ID=1
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Alfonso
-      - APELLIDO=Amezqueta
-      - DOCUMENTO=37228817
-      - NACIMIENTO=1992-12-07
-      - NUMERO=12345
+      - BATCH_SIZE=100
     networks:
       - testing_net
     depends_on:
@@ -35,11 +31,7 @@ services:
     environment:
       - CLI_ID=2
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Cosme
-      - APELLIDO=Fulanito
-      - DOCUMENTO=33445566
-      - NACIMIENTO=1994-11-12
-      - NUMERO=11111
+      - BATCH_SIZE=100
     networks:
       - testing_net
     depends_on:
@@ -52,11 +44,7 @@ services:
     environment:
       - CLI_ID=3
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Homero
-      - APELLIDO=Simpson
-      - DOCUMENTO=11223344
-      - NACIMIENTO=1980-07-19
-      - NUMERO=33213
+      - BATCH_SIZE=100
     networks:
       - testing_net
     depends_on:
@@ -70,11 +58,7 @@ services:
     environment:
       - CLI_ID=4
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Gabriel
-      - APELLIDO=Fisher
-      - DOCUMENTO=34723434
-      - NACIMIENTO=1985-05-01
-      - NUMERO=49023
+      - BATCH_SIZE=100
     networks:
       - testing_net
     depends_on:
@@ -87,11 +71,7 @@ services:
     environment:
       - CLI_ID=5
       - CLI_LOG_LEVEL=DEBUG
-      - NOMBRE=Jorge
-      - APELLIDO=Perez
-      - DOCUMENTO=39129268
-      - NACIMIENTO=1989-11-11
-      - NUMERO=32566
+      - BATCH_SIZE=100
     networks:
       - testing_net
     depends_on:

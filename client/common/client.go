@@ -8,8 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"encoding/csv"
+	"unicode/utf8"
 	log "github.com/sirupsen/logrus"
 )
+
+var BATCH_SIZE, ERR = strconv.Atoi(os.Getenv("BATCH_SIZE"))
 
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
@@ -33,30 +37,51 @@ type Bet struct {
 	document string
 	birthdate string
 	number string
-	nameSent bool
-	lastnameSent bool
-	documentSent bool
-	birthdateSent bool
-	betSent bool
-
 }
 
-// Read envoirement variables to generate the bet
-func generateBet(agency string) Bet {
-	bet := Bet {
-		agency: agency,
-		name: os.Getenv("NOMBRE"),
-		lastname: os.Getenv("APELLIDO"),
-		document: os.Getenv("DOCUMENTO"),
-		birthdate: os.Getenv("NACIMIENTO"),
-		number: os.Getenv("NUMERO"),
-		nameSent: false,
-		lastnameSent: false,
-		documentSent: false,
-		birthdateSent: false,
-		betSent: false,
+func readFile(id string) [][]string {
+	f, err := os.Open("agency-" + id + ".csv")
+    if err != nil {
+		log.Errorf("action: read_agency_file | result: fail | error: %s", err,)
+		return nil
 	}
-	return bet
+
+    // remember to close the file at the end of the program
+    defer f.Close()
+
+    // read csv values using csv.Reader
+    csvReader := csv.NewReader(f)
+    data, err := csvReader.ReadAll()
+    if err != nil {
+		log.Errorf("action: read_agency_file | result: fail | error: %s", err,)
+        return nil
+    }
+	return data
+}
+
+func createBetList(data [][]string, agency string) []Bet {
+	var bets []Bet
+    for i, line := range data {
+        if i > 0 { 
+			var bet Bet
+			bet.agency = agency
+			for j, field := range line {
+				if j == 0 {
+                    bet.name = field
+                } else if j == 1 {
+                    bet.lastname = field
+                } else if j == 2 {
+					bet.document = field
+				} else if j == 3 {
+					bet.birthdate = field
+				} else if j == 4 {
+					bet.number = field
+				}
+            }
+            bets = append(bets, bet)
+        }
+    }
+    return bets
 }
 
 func addpaddingToLenString(str string) string {
@@ -68,11 +93,11 @@ func addpaddingToLenString(str string) string {
 
 
 func addNameToMessage(bet Bet) string {
-	return "N" + addpaddingToLenString(strconv.Itoa(len(bet.name))) + bet.name
+	return "N" + addpaddingToLenString(strconv.Itoa(utf8.RuneCountInString(bet.name))) + bet.name
 }
 
 func addLastnameToMessage(bet Bet) string {
-	return "L" + addpaddingToLenString(strconv.Itoa(len(bet.lastname))) + bet.lastname
+	return "L" + addpaddingToLenString(strconv.Itoa(utf8.RuneCountInString(bet.lastname))) + bet.lastname
 }
 
 func addDocumentToMessage(bet Bet) string {
@@ -88,13 +113,29 @@ func addNumberToMessage(bet Bet) string {
 }
 
 func generateBetMessage(bet Bet) string {
-	msg := bet.agency
+	msg := ""
 	msg += addNameToMessage(bet)
 	msg += addLastnameToMessage(bet)
 	msg += addDocumentToMessage(bet)
 	msg += addBirthdateToMessage(bet)
 	msg += addNumberToMessage(bet)
-	return strings.Join([]string{msg, strings.Repeat("X", 1024-len(msg))}, "")
+	return msg
+}
+
+func generateMessage(bets []Bet, msgN int, id string) string {
+	betsToSend := 0
+	j := BATCH_SIZE * msgN
+	message := id
+	for true {
+		if betsToSend >= BATCH_SIZE || j >= len(bets) {
+			break
+		} else if betsToSend < BATCH_SIZE && j < len(bets) {
+			message += generateBetMessage(bets[j])
+			betsToSend++
+		}
+		j++
+	}
+	return  strings.Join([]string{message, strings.Repeat("X", 8192-len(message))}, "")
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -122,10 +163,31 @@ func (c *Client) createClientSocket() error {
 	return nil
 }
 
+func recvMessage(c *Client) string {
+	msg, err := bufio.NewReader(c.conn).ReadString('\n')
+	response := strings.Trim(msg, "\n")
+	response = strings.Trim(response, "X")
+
+	log.Infof("action: server_response_recieved | message: %s", response, )
+	
+	if err != nil {
+		log.Errorf("action: server_message_received | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return ""
+	} else if response == "ERROR" {
+		log.Errorf("action: server_message_received | result: fail | error: error ocurred while trying to store bet")
+		return ""
+	}
+	log.Infof("action: server_message_received | result: success | message: %s", response)
+	
+	return response
+}
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
-	time.Sleep(8 * time.Second)
-	// Send messages if the loopLapse threshold has not been surpassed
+	
 loop:
 	// Send messages if the loopLapse threshold has not been surpassed
 	for timeout := time.After(c.config.LoopLapse); ; {
@@ -137,39 +199,57 @@ loop:
 			break loop
 		default:
 		}
-		//generate client bet
-		bet := generateBet(c.config.ID)
-		sendMessage := generateBetMessage(bet)
+		//generate client bets
+		records := readFile(c.config.ID)
+
+		if records == nil {
+			return
+		}
+		bets := createBetList(records, c.config.ID)
 
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
-		fmt.Fprintf(
-			c.conn,
-			sendMessage,
-		)
-		msg, err := bufio.NewReader(c.conn).ReadString('\n')
-		response := strings.Trim(msg, "\n")
-		response = strings.Trim(response, "X")
+		done:= "DONE"
+		done = strings.Join([]string{done, strings.Repeat("X", 8192-len(done))}, "")
 		
-		c.conn.Close()
-		log.Infof("action: server_response_recieved | message: %s", response, )
-		
-		if err != nil {
-			log.Errorf("action: bet_stored | result: fail | client_id: %v | error: %v",
-				c.config.ID,
-				err,
-			)
-			return
-		} else if response == "ERROR" {
-			log.Infof("action: bet_stored | result: fail | error: error ocurrer while trying to store bet")
+		response := recvMessage(c)
+		nMsg := 0
+
+		if ( response == "" ) {
 			return
 		}
-		log.Infof("action: bet_stored | result: success | dni: %s | number: %s | message: %s}",
-			bet.document,
-			bet.number,
-			response,
+		for true {
+			sendMessage := generateMessage(bets, nMsg, c.config.ID)
+			if sendMessage[0:2] == ( c.config.ID + "X" ) {
+				break
+			}
+			log.Infof("action: sending_batch | result: pending | batch_number: %v}", nMsg, )
+			fmt.Fprintf(
+				c.conn,
+				sendMessage,
+			)
+			nMsg += 1
+			log.Infof("action: batch_sent | result: sucess | batch_number: %v}", nMsg, )
+		}
+						
+		log.Infof("action: sending_donde | result: pending}",)
+		fmt.Fprintf(
+			c.conn,
+			done,
 		)
+			
+		log.Infof("action: donde_sent | result: sucess ", )
+
+		response = recvMessage(c)
+
+		if ( response == "" ) {
+			return
+		}
+
+		c.conn.Close()
+		
+		log.Infof("action: batch_stored | result: success | message: %s}", response, )
 		break loop
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)

@@ -26,12 +26,11 @@ class Bet:
         self.number = int(number)
 
 """this function process the bets sent by clients, if it success then returns client bet """
-def process_bet( message: str) -> Bet:
+def process_bet( message: str) -> str:
     try:
-        bet = parse_client_message(message)
-        bets = [ bet ]
+        bets = parse_client_message(message)
         store_bets(bets)
-        return bet
+        return "DONE"
     except Exception as e:
         logging.info(f'action: process_bet | result: fail | error: {e}')
         return None 
@@ -66,19 +65,20 @@ def load_bets() -> list[Bet]:
 Recieves a message that the client sends to the server and parse it into a bet
 """
 def parse_client_message(message: str) -> Bet:
+    i = 0
+    bets = []
     agency = ""
     first_name = ""
     last_name = ""
     document = ""
     birthdate = ""
     number = ""
-    i = 0
-    
+
     while ( i < len(message) ):
         if ( i == 0 ):
             agency = message[0]
             i += 1
-        
+
         field = message[i]
         str_len = int(message[i + 1] + message[i + 2] )
         i += 3
@@ -97,8 +97,9 @@ def parse_client_message(message: str) -> Bet:
 
         elif ( field == "V" ):
             number = message[i: i + str_len ]
-            break
-        
+            bets.append(Bet(agency, first_name, last_name, document, birthdate, number))
+            
+
         i += str_len
     
-    return Bet(agency, first_name, last_name, document, birthdate, number)
+    return bets

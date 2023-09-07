@@ -10,6 +10,8 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._sigterm_recv = False
+        self._connections = []
+
 
     def run(self):
         """
@@ -24,8 +26,10 @@ class Server:
         # the server
         while not self._sigterm_recv:
             try:
-                client_sock = self.__accept_new_connection()
-                self.__handle_client_connection(client_sock)
+                self.__accept_new_connection()
+                if ( len(self._connections) == 5 ):
+                    self.process_clients()
+                # self.__handle_client_connection(client_sock)
             except OSError as e:
                 break
 
@@ -33,34 +37,38 @@ class Server:
 
     def __handle_client_connection(self, client_sock):
         """
-        Read message from a specific client socket and closes the socket
+        Read N messages from a specific client socket, it does not close the connection yet
 
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
         try:
-            msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
-            addr = client_sock.getpeername()
-            logging.info(f'action: receive_bet_message | result: success | ip: {addr[0]} | msg: {msg}')
-            bet = process_bet(msg)
-            response = "OK"
-            if bet == None:
-                logging.info(f'action: send_error_message | result: fail')
-                response = "ERROR"
-            else:
-                logging.info(f'action: receive_bet_message | result: success | dni: {bet.document} | number: {bet.number}')
+            client_sock.send(self.send_res("READY").encode('utf-8'))
+            n = 1
             
-            client_sock.send(self.send_res(response).encode('utf-8'))
+            while True: 
+                msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
+                addr = client_sock.getpeername()
+                if msg != "DONE":
+                    logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]} | message number: {n}')
+                    result = process_bet(msg)
+                    if result == None:
+                        self._terminate_all_connections()
+                        break
+                    else:
+                        logging.info(f'action: processing_batch_message | result: success')
+
+                else:
+                    break
         
         except OSError as e:
             logging.error("action: receive_bet_message | result: fail | error: {e}")
-        finally:
-            client_sock.close()
+            self._terminate_all_connections()
 
     """receive message from client socket"""
     def recv_msg(self, sock):
         result = b''
-        remaining = 1024
+        remaining = 8192
         while remaining > 0:
             data = sock.recv(remaining)
             result += data
@@ -69,7 +77,7 @@ class Server:
 
     """creates message for client socket"""
     def send_res(self, message):
-        return message.ljust(1024, 'X') + "\n"
+        return message.ljust(8192, 'X') + "\n"
 
     def __accept_new_connection(self):
         """
@@ -83,9 +91,27 @@ class Server:
         logging.info('action: accept_connections | result: in_progress')
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        return c
+        self._connections.append(c)
+        logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
 
+    """exit gracefully if SIGTERM is recieved"""
     def exit_gracefully(self, signum, frame):
         logging.info('action: exit_gracefully_receive | result: prepare_exit_gracefully')
         self._sigterm_recv = True
         self._server_socket.close()
+
+    """apply protocol to all clients"""
+    def process_clients(self):
+        for c in self._connections:
+            self.__handle_client_connection(c)
+        
+        for c in self._connections:
+            c.send(self.send_res("DONE").encode('utf-8'))
+            c.close()
+
+    def _terminate_all_connections(self):
+        for c in self._connections:
+            c.send(self.send_res("ERROR").encode('utf-8'))
+            c.close()
+
+        self._connections = []
