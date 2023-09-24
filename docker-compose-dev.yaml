@@ -11,6 +11,9 @@ services:
       - LOGGING_LEVEL=DEBUG
     networks:
       - testing_net
+    volumes:
+      - ./server/config.ini:/config.ini
+
   client1:
     container_name: client1
     image: client:latest
@@ -27,6 +30,8 @@ services:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config.yaml:/config.yaml
 
   client2:
     container_name: client2
@@ -44,6 +49,8 @@ services:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config.yaml:/config.yaml
 
   client3:
     container_name: client3
@@ -61,6 +68,8 @@ services:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config.yaml:/config.yaml
 
 
   client4:
@@ -79,6 +88,8 @@ services:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config.yaml:/config.yaml
 
   client5:
     container_name: client5
@@ -91,11 +102,13 @@ services:
       - APELLIDO=Perez
       - DOCUMENTO=39129268
       - NACIMIENTO=1989-11-11
-      - NUMERO=32566
+      - NUMERO=123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789000000
     networks:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config.yaml:/config.yaml
 
 networks:
   testing_net:

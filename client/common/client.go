@@ -11,6 +11,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+//string max lengh
+const MAX_LEN = 99
+
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
 	ID            string
@@ -66,25 +69,37 @@ func addpaddingToLenString(str string) string {
 	return str
 }
 
+func truncateStr(str string) string {
+	if ( len(str) > MAX_LEN ) {
+		return str[:MAX_LEN]
+	} 
+	return str
+}
+
 
 func addNameToMessage(bet Bet) string {
-	return "N" + addpaddingToLenString(strconv.Itoa(len(bet.name))) + bet.name
+	str := truncateStr(bet.name)
+	return "N" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
 func addLastnameToMessage(bet Bet) string {
-	return "L" + addpaddingToLenString(strconv.Itoa(len(bet.lastname))) + bet.lastname
+	str := truncateStr(bet.lastname)
+	return "L" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
 func addDocumentToMessage(bet Bet) string {
-	return "D" + addpaddingToLenString(strconv.Itoa(len(bet.document))) + bet.document
+	str := truncateStr(bet.document)
+	return "D" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
 func addBirthdateToMessage(bet Bet) string {
-	return "B" + addpaddingToLenString(strconv.Itoa(len(bet.birthdate))) + bet.birthdate
+	str := truncateStr(bet.birthdate)
+	return "B" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
 func addNumberToMessage(bet Bet) string {
-	return "V" + addpaddingToLenString(strconv.Itoa(len(bet.number))) + bet.number
+	str := truncateStr(bet.number)
+	return "V" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
 func generateBetMessage(bet Bet) string {
@@ -94,7 +109,7 @@ func generateBetMessage(bet Bet) string {
 	msg += addDocumentToMessage(bet)
 	msg += addBirthdateToMessage(bet)
 	msg += addNumberToMessage(bet)
-	return strings.Join([]string{msg, strings.Repeat("X", 1024-len(msg))}, "")
+	return strings.Join([]string{msg, strings.Repeat("X", 1024 - len(msg))}, "")
 }
 
 // NewClient Initializes a new client receiving the configuration
