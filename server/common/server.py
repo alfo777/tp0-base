@@ -3,6 +3,8 @@ from .utils import process_bet
 import socket
 import logging
 
+MSG_LEN = 1024
+
 class Server:
     def __init__(self, port, listen_backlog):
         # Initialize server socket
@@ -19,9 +21,6 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
         while not self._sigterm_recv:
             try:
                 client_sock = self.__accept_new_connection()
@@ -50,7 +49,7 @@ class Server:
             else:
                 logging.info(f'action: receive_bet_message | result: success | dni: {bet.document} | number: {bet.number}')
             
-            client_sock.send(self.send_res(response).encode('utf-8'))
+            self.send_msg(client_sock, response)
         
         except OSError as e:
             logging.error("action: receive_bet_message | result: fail | error: {e}")
@@ -60,7 +59,7 @@ class Server:
     """receive message from client socket"""
     def recv_msg(self, sock):
         result = b''
-        remaining = 1024
+        remaining = MSG_LEN
         while remaining > 0:
             data = sock.recv(remaining)
             result += data
@@ -68,8 +67,18 @@ class Server:
         return result
 
     """creates message for client socket"""
-    def send_res(self, message):
-        return message.ljust(1024, 'X') + "\n"
+    def generate_res(self, message):
+        return message.ljust(MSG_LEN - 1, 'X') + "\n"
+
+    """send response message to client"""
+    def send_msg(self, sock, message):
+        response = self.generate_res(message).encode('utf-8')
+        remaining = MSG_LEN
+        while remaining > 0:
+            pos = MSG_LEN - remaining
+            nBytesSent = sock.send(response[pos:MSG_LEN])
+            logging.info(f'action: sending_response | result: success | message: {message} | bytes_sent: {nBytesSent}')
+            remaining -= nBytesSent
 
     def __accept_new_connection(self):
         """

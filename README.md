@@ -222,3 +222,13 @@ El servidor recibe el mensaje de algun cliente, lo guarda en el archivo bets.csv
 Una representacion de protocolo se puede ver en la siguiente imagen:
 
 ![Alt text](img/exercise-5.png)
+
+
+## Reentrega
+
+## Ejercicio 5
+
+Correcciones realizadas para el Ejercicio 5:
+
+- Se modifico el enviar mensaje para que evite el Short Write
+- Se modifico el protocolo del Ejercicio 5 para que en caso de ingresar un texto de longitud mayor a 99 bytes el texto deba ser truncado, o sea que si la longitud es mayor a 99 el texto sera recordado a una longitud de 99 caracteres para poder enviar el mensaje
