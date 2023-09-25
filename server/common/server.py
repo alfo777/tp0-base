@@ -3,11 +3,14 @@ from .utils import process_bet
 from .utils import generate_winners_message
 from .utils import do_lottery
 from threading import Lock
+from threading import Barrier
 import socket
 import logging
 import threading
+import time
 
 CANT_AGENCIES = 5
+MSG_LEN = 8192
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -18,6 +21,7 @@ class Server:
         self._sigterm_recv = False
         self._threads = []
         self._lock = Lock()
+        self._barrier = Barrier(CANT_AGENCIES)
 
 
     def run(self):
@@ -61,8 +65,8 @@ class Server:
                 msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
                 addr = client_sock.getpeername()
                 if msg != "DONE":
-                    logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]} | message number: {n}')
-                    logging.info(f'action: processing_batch_message | result: pending | ip: {addr[0]} | message number: {n}')
+                    logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]}')
+                    logging.info(f'action: processing_batch_message | result: pending | ip: {addr[0]}')
                     lock.acquire()
                     result = process_bet(msg)
                     lock.release()
@@ -82,7 +86,7 @@ class Server:
     """receive message from client socket"""
     def recv_msg(self, sock):
         result = b''
-        remaining = 8192
+        remaining = MSG_LEN
         while remaining > 0:
             data = sock.recv(remaining)
             result += data
@@ -91,7 +95,7 @@ class Server:
 
     """creates message for client socket"""
     def send_res(self, message):
-        return message.ljust(8192, 'X') + "\n"
+        return message.ljust(MSG_LEN, 'X') + "\n"
 
     def __accept_new_connection(self):
         """
@@ -105,7 +109,7 @@ class Server:
         logging.info('action: accept_connections | result: in_progress')
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        t = threading.Thread(target=self.process_client, args=(c,self._lock))
+        t = threading.Thread(target=self.process_client, args=(c, self._lock, self._barrier))
         self._threads.append(t)
 
 
@@ -117,8 +121,11 @@ class Server:
         self._server_socket.close()
 
     """apply protocol to all clients"""
-    def process_client(self, c, lock):
+    def process_client(self, c, lock, barrier):
         self.__handle_client_connection(c, lock)
+        
+        barrier.wait()
+
         c.send(self.send_res("START_LOTTERY").encode('utf-8'))
         logging.info('action: lottery | result: pending')
         
@@ -135,13 +142,30 @@ class Server:
     """signal that the winners can be requested and send the to its  agency"""
     def __handle_client_winners(self, client_sock, lottery_result):
         try:
+            message = ""
             addr = client_sock.getpeername()
             client_sock.send(self.send_res("READY").encode('utf-8'))
             msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
             logging.info(f'action: ready_message_sent | result: success | ip: {addr[0]}')
             agency = int(msg[0])
             winners = lottery_result.get_agency_winners(agency)
-            client_sock.send(self.send_res(generate_winners_message(winners)).encode('utf-8'))
+            
+            for winner in winners:
+                winnerStr = generate_winners_message(winner)
+                if len(message + winnerStr) <= MSG_LEN:
+                    message = message + winnerStr
+                
+                else:  
+                    client_sock.send(self.send_res(message).encode('utf-8'))
+                    logging.info(f'action: sending_winners | result: done | message: {message}')
+                    message = winnerStr
+            
+            client_sock.send(self.send_res(message).encode('utf-8'))
+            logging.info(f'action: sending_winners | result: done | message: {message}')
+            
+            time.sleep(2)
+            client_sock.send(self.send_res("DONE").encode('utf-8'))
+            logging.info(f'action: sending_done | result: done | ip: {addr[0]}')
         
         except OSError as e:
             logging.error("action: receive_bet_message | result: fail | error: {e}")

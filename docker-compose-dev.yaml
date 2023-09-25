@@ -11,6 +11,9 @@ services:
       - LOGGING_LEVEL=DEBUG
     networks:
       - testing_net
+    volumes:
+      - ./server/config.ini:/config.ini
+  
   client1:
     container_name: client1
     image: client:latest
@@ -18,12 +21,16 @@ services:
     environment:
       - CLI_ID=1
       - CLI_LOG_LEVEL=DEBUG
-      - BATCH_SIZE=100
+      - BATCH_SIZE=300
+      - FILE_NAME=agency-1.csv
+      - CONFIG=config-1.yaml
     networks:
       - testing_net
     depends_on:
       - server
-
+    volumes:
+      - ./client/config-1.yaml:/config-1.yaml
+  
   client2:
     container_name: client2
     image: client:latest
@@ -31,11 +38,15 @@ services:
     environment:
       - CLI_ID=2
       - CLI_LOG_LEVEL=DEBUG
-      - BATCH_SIZE=100
+      - BATCH_SIZE=300
+      - FILE_NAME=agency-2.csv
+      - CONFIG=config-2.yaml
     networks:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config-2.yaml:/config-2.yaml
 
   client3:
     container_name: client3
@@ -44,12 +55,15 @@ services:
     environment:
       - CLI_ID=3
       - CLI_LOG_LEVEL=DEBUG
-      - BATCH_SIZE=100
+      - BATCH_SIZE=300
+      - FILE_NAME=agency-3.csv
+      - CONFIG=config-3.yaml
     networks:
       - testing_net
     depends_on:
       - server
-
+    volumes:
+      - ./client/config-3.yaml:/config-3.yaml
 
   client4:
     container_name: client4
@@ -58,11 +72,15 @@ services:
     environment:
       - CLI_ID=4
       - CLI_LOG_LEVEL=DEBUG
-      - BATCH_SIZE=100
+      - BATCH_SIZE=300
+      - FILE_NAME=agency-4.csv
+      - CONFIG=config-4.yaml
     networks:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config-4.yaml:/config-4.yaml
 
   client5:
     container_name: client5
@@ -72,10 +90,14 @@ services:
       - CLI_ID=5
       - CLI_LOG_LEVEL=DEBUG
       - BATCH_SIZE=100
+      - FILE_NAME=agency-5.csv
+      - CONFIG=config-5.yaml
     networks:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client/config-5.yaml:/config-5.yaml
 
 networks:
   testing_net:

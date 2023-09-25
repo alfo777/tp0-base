@@ -137,8 +137,9 @@ def do_lottery():
 
 """generate winners message for a agency"""
 def generate_winners_message(winners):
-    message = ""
-    for document in winners:
-        message = message + str(len(document)) + document
-    
-    return message
+    return addPaddingToStrLen(str(len(winners))) + winners
+
+def addPaddingToStrLen(string):
+    if ( len(string) == 1 ):
+        return "0" + string
+    return string
