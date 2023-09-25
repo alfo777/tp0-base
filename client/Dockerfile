@@ -16,7 +16,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod vendor -o bin/client github.com/7574-
 
 FROM busybox:latest
 COPY --from=builder /build/bin/client /client
-COPY ./client/config.yaml /config.yaml
+COPY ./client/config-1.yaml /config-1.yaml
+COPY ./client/config-2.yaml /config-2.yaml
+COPY ./client/config-3.yaml /config-3.yaml
+COPY ./client/config-4.yaml /config-4.yaml
+COPY ./client/config-5.yaml /config-5.yaml
 COPY ./client/data/agency-1.csv /agency-1.csv
 COPY ./client/data/agency-2.csv /agency-2.csv
 COPY ./client/data/agency-3.csv /agency-3.csv

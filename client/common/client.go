@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 	"os"
+	"io"
 	"strconv"
 	"strings"
 	"encoding/csv"
@@ -13,6 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const MAX_LEN = 99
+const MSG_SIZE = 8192
 var BATCH_SIZE, ERR = strconv.Atoi(os.Getenv("BATCH_SIZE"))
 
 // ClientConfig Configuration used by the client
@@ -39,51 +42,80 @@ type Bet struct {
 	number string
 }
 
-func readFile(id string) [][]string {
-	f, err := os.Open("agency-" + id + ".csv")
+//Parse a .csv line into a bet struct
+func parseLineIntoBet(data []string, agency string) Bet {
+    var bet Bet
+	bet.agency = agency
+	for j, field := range data {
+		if j == 0 {
+			bet.name = field
+		} else if j == 1 {
+			bet.lastname = field
+		} else if j == 2 {
+			bet.document = field
+		} else if j == 3 {
+			bet.birthdate = field
+		} else if j == 4 {
+			bet.number = field
+		}
+	}
+    return bet
+}
+
+//process agency csv and send bets message
+func processBets(c *Client, id string) {
+	var batch []Bet
+	nMsg := 1
+	f, err := os.Open(os.Getenv("FILE_NAME"))
     if err != nil {
 		log.Errorf("action: read_agency_file | result: fail | error: %s", err,)
-		return nil
+		return
 	}
 
-    // remember to close the file at the end of the program
-    defer f.Close()
-
-    // read csv values using csv.Reader
     csvReader := csv.NewReader(f)
-    data, err := csvReader.ReadAll()
-    if err != nil {
-		log.Errorf("action: read_agency_file | result: fail | error: %s", err,)
-        return nil
-    }
-	return data
-}
-
-func createBetList(data [][]string, agency string) []Bet {
-	var bets []Bet
-    for i, line := range data {
-        if i > 0 { // omit header line
-			var bet Bet
-			bet.agency = agency
-			for j, field := range line {
-				if j == 0 {
-                    bet.name = field
-                } else if j == 1 {
-                    bet.lastname = field
-                } else if j == 2 {
-					bet.document = field
-				} else if j == 3 {
-					bet.birthdate = field
-				} else if j == 4 {
-					bet.number = field
-				}
-            }
-            bets = append(bets, bet)
+    
+	for {
+		var bet Bet
+        rec, err := csvReader.Read()
+		if err == io.EOF {
+            break
         }
+        if err != nil {
+            log.Errorf("action: read_agency_file | result: fail | error: %s", err,)
+		}
+
+		bet = parseLineIntoBet(rec, id)
+        
+		batch = append(batch, bet)
+
+		if ( len(batch) == BATCH_SIZE ) {
+			var batchToSend []Bet
+			var message string
+			batchToSend, message = generateMessage(batch, id)
+			log.Infof("action: sending_batch | result: pending | batch_number: %v}", nMsg, )
+			fmt.Fprintf( c.conn, message,)
+			log.Infof("action: batch_sent | result: sucess | batch_number: %v}", nMsg, )
+			nMsg += 1
+			batch = batchToSend
+
+		}
     }
-    return bets
+
+	for len(batch) != 0 {
+		var batchToSend []Bet
+		var message string
+		batchToSend, message = generateMessage(batch, id)
+		log.Infof("action: sending_batch | result: pending | batch_number: %v}", nMsg,)
+		fmt.Fprintf( c.conn, message,)
+		log.Infof("action: batch_sent | result: sucess | batch_number: %v}", nMsg,)
+		nMsg += 1
+		batch = batchToSend
+	}
+
+	defer f.Close()
 }
 
+//add padding so lenght string has 2 bytes
 func addpaddingToLenString(str string) string {
 	if len(str) == 1 {
 		return "0" + str
@@ -91,27 +123,45 @@ func addpaddingToLenString(str string) string {
 	return str
 }
 
+//trucate a string if lenght is greater than 99
+func truncateStr(str string) string {
+	if ( len(str) > MAX_LEN ) {
+		return str[:MAX_LEN]
+	} 
+	return str
+}
 
+//generate Name string
 func addNameToMessage(bet Bet) string {
-	return "N" + addpaddingToLenString(strconv.Itoa(utf8.RuneCountInString(bet.name))) + bet.name
+	str := truncateStr(bet.name)
+	return "N" + addpaddingToLenString(strconv.Itoa(utf8.RuneCountInString((str)))) + str
 }
 
+//generate Lastname string
 func addLastnameToMessage(bet Bet) string {
-	return "L" + addpaddingToLenString(strconv.Itoa(utf8.RuneCountInString(bet.lastname))) + bet.lastname
+	str := truncateStr(bet.lastname)
+	return "L" + addpaddingToLenString(strconv.Itoa(utf8.RuneCountInString((str)))) + str
 }
 
+//generate document string
 func addDocumentToMessage(bet Bet) string {
-	return "D" + addpaddingToLenString(strconv.Itoa(len(bet.document))) + bet.document
+	str := truncateStr(bet.document)
+	return "D" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
+//generate birthdate string
 func addBirthdateToMessage(bet Bet) string {
-	return "B" + addpaddingToLenString(strconv.Itoa(len(bet.birthdate))) + bet.birthdate
+	str := truncateStr(bet.birthdate)
+	return "B" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
+//generate number string
 func addNumberToMessage(bet Bet) string {
-	return "V" + addpaddingToLenString(strconv.Itoa(len(bet.number))) + bet.number
+	str := truncateStr(bet.number)
+	return "V" + addpaddingToLenString(strconv.Itoa(len(str))) + str
 }
 
+//generate a bet message
 func generateBetMessage(bet Bet) string {
 	msg := ""
 	msg += addNameToMessage(bet)
@@ -122,20 +172,26 @@ func generateBetMessage(bet Bet) string {
 	return msg
 }
 
-func generateMessage(bets []Bet, msgN int, id string) string {
-	betsToSend := 0
-	j := BATCH_SIZE * msgN
+//generate batch message
+func generateMessage(batch []Bet, id string) ([]Bet, string) {
 	message := id
-	for true {
-		if betsToSend >= BATCH_SIZE || j >= len(bets) {
+	var betsLeft []Bet
+	lastProcessedBet := len(batch)
+	for i := 0; i < len(batch); i++ {
+		betStr := generateBetMessage(batch[i])
+		
+		if len(message + betStr) > MSG_SIZE {
+			lastProcessedBet = i
 			break
-		} else if betsToSend < BATCH_SIZE && j < len(bets) {
-			message += generateBetMessage(bets[j])
-			betsToSend++
 		}
-		j++
+		message += betStr
 	}
-	return  strings.Join([]string{message, strings.Repeat("X", 8192-len(message))}, "")
+
+	for i := lastProcessedBet; i < len(batch); i++ {
+		betsLeft = append(betsLeft, batch[i])
+	}
+
+	return  betsLeft, strings.Join([]string{message, strings.Repeat("X", MSG_SIZE - len(message))}, "")
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -167,8 +223,6 @@ func recvMessage(c *Client) string {
 	msg, err := bufio.NewReader(c.conn).ReadString('\n')
 	response := strings.Trim(msg, "\n")
 	response = strings.Trim(response, "X")
-
-	log.Infof("action: server_response_recieved | message: %s", response, )
 	
 	if err != nil {
 		log.Errorf("action: server_message_received | result: fail | client_id: %v | error: %v",
@@ -177,7 +231,7 @@ func recvMessage(c *Client) string {
 		)
 		return ""
 	} else if response == "ERROR" {
-		log.Errorf("action: server_message_received | result: fail | error: error ocurred while trying to store bet")
+		log.Errorf("action: server_message_received | result: fail | error: error message received from server")
 		return ""
 	}
 	log.Infof("action: server_message_received | result: success | message: %s", response)
@@ -190,9 +244,9 @@ func notifyWinners(message string) {
 	cant := 0
 	msg := string(message)
 	for i < len(msg) {
-		strLen, _ := strconv.Atoi(string(msg[i]))
-		i += 1
-		dni := message[i : i+strLen]
+		strLen, _ := strconv.Atoi(string(msg[i]) + string(msg[i + 1]))
+		i += 2
+		dni := message[i : i + strLen]
 		i += strLen
 		cant += 1
 		log.Infof("action: notify_winner | result: success | winner: %s", dni)
@@ -204,6 +258,8 @@ func notifyWinners(message string) {
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
 	time.Sleep(8 * time.Second)
+	id := os.Getenv("CLI_ID")
+	winnersStr := ""
 loop:
 	// Send messages if the loopLapse threshold has not been surpassed
 	for timeout := time.After(c.config.LoopLapse); ; {
@@ -215,44 +271,27 @@ loop:
 			break loop
 		default:
 		}
-		//generate client bets
-		records := readFile(c.config.ID)
 
-		if records == nil {
-			return
-		}
-		bets := createBetList(records, c.config.ID)
-
-		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
 		done:= "DONE"
 		done = strings.Join([]string{done, strings.Repeat("X", 8192-len(done))}, "")
+		
+		log.Infof("action: waiting_ready | result: pending}",)
+		
 		response := recvMessage(c)
-		nMsg := 0
 
-		if ( response == "" ) {
+		if ( response != "READY" ) {
 			return
 		}
-		for true {
-			sendMessage := generateMessage(bets, nMsg, c.config.ID)
-			if sendMessage[0:2] == ( c.config.ID + "X" ) {
-				break
-			}
-			log.Infof("action: sending_batch | result: pending | batch_number: %v}", nMsg, )
-			fmt.Fprintf(
-				c.conn,
-				sendMessage,
-			)
-			nMsg += 1
-			log.Infof("action: batch_sent | result: sucess | batch_number: %v}", nMsg, )
-		}
+
+		log.Infof("action: ready_received | result: done}",)
+		
+		processBets(c, id)
 						
 		log.Infof("action: sending_donde | result: pending}",)
-		fmt.Fprintf(
-			c.conn,
-			done,
-		)
+		
+		fmt.Fprintf(c.conn,done,)
 			
 		log.Infof("action: donde_sent | result: sucess ", )
 		
@@ -272,14 +311,19 @@ loop:
 
 		message := strings.Join([]string{c.config.ID, strings.Repeat("X", 8192-len(c.config.ID))}, "")
 
-		fmt.Fprintf(
-			c.conn,
-			message,
-		)
+		fmt.Fprintf( c.conn, message, )
+		
+		for {
+			response = recvMessage(c)
+			if response == "DONE" {
+				break
 
-		response = recvMessage(c)
+			} else {
+				winnersStr = winnersStr + response
+			}
+		}
 
-		notifyWinners(response)
+		notifyWinners(winnersStr)
 
 		c.conn.Close()
 		

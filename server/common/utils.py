@@ -135,10 +135,18 @@ def do_lottery():
 
     return result
 
-"""generate winners message for a agency"""
-def generate_winners_message(winners):
-    message = ""
-    for document in winners:
-        message = message + str(len(document)) + document
+def addPaddingToStrLen(string):
+    if ( len(string) == 1 ):
+        return "0" + string
+    return string
+
+# """generate winners message for a agency"""
+# def generate_winners_message(winners):
+#     message = ""
+#     for document in winners:
+#         message = message + addPaddingToStrLen(str(len(document))) + document
     
-    return message
+#     return message
+
+def generate_winners_message(winners):
+    return addPaddingToStrLen(str(len(winners))) + winners
