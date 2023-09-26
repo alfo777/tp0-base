@@ -208,3 +208,36 @@ Para resolver este ejercicio se crearon 5 hilos, uno por cada conexión con un c
 
 
 Para manejar la concurrencia entre hilos se utiliza un mismo lock que se adquiere al momento de leer o escribir el archivo bets.csv. Cuando la operación sobre el archivo termina se libera lock.
+
+## Reentrega
+
+## Ejercicio 5
+
+Correcciones realizadas para el Ejercicio 5:
+
+- Se modifico el enviar mensaje para que evite el Short Write
+- Se modifico el protocolo del Ejercicio 5 para que en caso de ingresar un texto de longitud mayor a 99 bytes el texto deba ser truncado, o sea que si la longitud es mayor a 99 el texto sera recordado a una longitud de 99 caracteres para poder enviar el mensaje
+
+## Ejercicio 6
+
+Correcciones realizadas para el Ejercicio 6:
+
+- Se agregaron todos los cambios realizados en la corrección del Ejercicio 5
+- Se crearon 5 archivos de configuración para cada cliente, se le pasa a cada cliente por variable de ambiente cual es el nombre de su respectivo archivo y el cliente lo abre para poder leerlo.
+- Ahora se abre el archivo y a medida que se leen las lineas del mismo se va armando el mensaje a enviar, en vez de leer todo el archivo y luego enviar los mensajes. Cuando se llegue a la cantidad de N apuestas del batch el mensaje se va a enviar. Si al estar concatenando apuestas se encuentra que al sumar una nueva apuesta se va a  superar los 8192 bytes (el tamaño del mensaje) entonces el mensaje se envia al servidor (sin agregar la apuesta que hubiera superado el tamaño del mensaje) aun si no se pudieron agregar las N apuestas al mensaje y guarda la apuesta que no pudo entrar para enviarla en un mensaje futuro.
+
+## Ejercicio 7
+
+Correcciones realizadas para el Ejercicio 7:
+
+- Se agregaron todos los cambios realizados en la corrección del Ejercicio 6
+- Se hicieron unos cambios en el protocolo del ejercicio 7:
+- El campo correspondiente a la longitud del documento a mandar se extendio para que fuera de 2 bytes en lugar de 1 byte, en caso se que el largo pueda representarse en 1 byte se le agregara un 0 al frente, por ejemplo si el documento es 12345678 el largo sera representado como 08
+- Ahora el servidor le puede llegar a enviar a cada cliente correspondiente mas de un response con la lista de documentos de los ganadores. El servidor tratara de insertar todos los documentos que pueda dentro del response. Si en una response no logra mandar todos los documentos entonces seguira mandando responses con los documentos faltantes hasta enviar todos los ganadores. Una vez enviado todos los ganadores a los respectivos clientes el servidor envia un DONE a cada cliente indicando que ya se enviaron todos los ganadores correspondientes.
+
+## Ejercicio 8
+
+Correcciones realizadas para el Ejercicio 8:
+
+- Se agregaron todos los cambios realizados en la corrección del Ejercicio 7
+- Se agrego una Barrera con valor 5 entre los 5 hilos con las conexiones. Antes de que el servidor empiece la loteria cada hilo hace un .wait() y espera a que los demas hayan ingresado a todas las apuestas de sus respectivos clientes. Con la Barrera como herramienta de sincronización cuando el archivo bets.csv ya tiene todas las apuestas entonces todos los hilos habran hecho wait() y entonces todos podran continuar con el protocolo descripto mas arriba.
