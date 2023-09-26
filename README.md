@@ -175,3 +175,17 @@ Se agregó un nuevo contenedor llamado **test-server**. Este contenedor esta con
 
 Para demostrarlo se puede levantar los 3 contenedores y comprobar que **test-server** indica que el server está levantado. Luego hacer un **docker stop server** y comprobar que el servidor está caído.
 
+## Reentrega
+
+## Ejercicio 3
+
+Correcciones realizadas para el Ejercicio 3:
+
+Se agrego un profile al servicio **test-server** y se agregaron los comandos en el Makefile para poder ejecutar el contenedor con el **test-server**:
+
+* **docker-compose-test-up**: Levanta al servidor y al cliente junto con el test-server para que se verifique si el servidor esta levantado o no.
+
+* **docker-compose-test-down**: Detiene a los contenedores y los destruye.
+* **docker-compose-test-logs**: muestra los logs entre los tres contenedores
+
+Para no levantar al test-server solamente hace falta levantar al sistema como se expresa en el enunciado
