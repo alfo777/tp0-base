@@ -31,8 +31,8 @@ class Server:
                 break
                     
         if self._sigterm_recv:
-            self._server_socket.close()
             logging.info('action: exit_gracefully | result: success')
+            self._server_socket.close()
 
     def __handle_client_connection(self, client_sock):
         """
@@ -62,12 +62,15 @@ class Server:
         Function blocks until a connection to a client is made.
         Then connection created is printed and returned
         """
-
-        # Connection arrived
-        logging.info('action: accept_connections | result: in_progress')
-        c, addr = self._server_socket.accept()
-        logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        return c
+        try:
+            # Connection arrived
+            logging.info('action: accept_connections | result: in_progress')
+            c, addr = self._server_socket.accept()
+            logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
+            return c
+        
+        except Exception as e:
+            return None
 
     """
         close server connection gravefully if SIGTERM recieved 
@@ -77,3 +80,6 @@ class Server:
         self._sigterm_recv = True
         if self.conn != None:
             self.conn.shutdown(socket.SHUT_RDWR)
+            
+        else:
+            self._server_socket.close()
