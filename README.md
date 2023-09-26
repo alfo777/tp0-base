@@ -211,6 +211,34 @@ Para manejar la concurrencia entre hilos se utiliza un mismo lock que se adquier
 
 ## Reentrega
 
+## Commits
+
+Ejercicio 3 eda498d1a3e6e00beabb91fed1322c722f7a6e00<br />
+Ejercicio 4 c5055a1c28f40e0eee75f72ff140688fc076e2a9<br />
+Ejercicio 5 f085efbc4230b2c82d8e05fe3c31f86cf72aa443<br />
+Ejercicio 6 36b7bf22b9974a944f3b2692d7f13d713a08a3ea<br />
+Ejercicio 7 494179d154dd57e4acac27067eae7814e417c09f<br />
+Ejercicio 8 8be03ae5c651a4aab0bd1920ef8234bd9d675d40<br />
+
+## Ejercicio 3
+
+Correcciones realizadas para el Ejercicio 3:
+
+Se agrego un profile al servicio **test-server** y se agregaron los comandos en el Makefile para poder ejecutar el contenedor con el **test-server**:
+
+* **docker-compose-test-up**: Levanta al servidor y al cliente junto con el test-server para que se verifique si el servidor esta levantado o no.
+
+* **docker-compose-test-down**: Detiene a los contenedores y los destruye.
+* **docker-compose-test-logs**: muestra los logs entre los tres contenedores
+
+Para no levantar al test-server solamente hace falta levantar al sistema como se expresa en el enunciado
+
+## Ejercicio 4
+
+Correcciones realizadas para el Ejercicio 4:
+
+- se usa el shutdown para cerrar de manera gracefully la conexion del server
+
 ## Ejercicio 5
 
 Correcciones realizadas para el Ejercicio 5:
