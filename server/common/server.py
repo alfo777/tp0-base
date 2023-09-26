@@ -3,6 +3,8 @@ from .utils import process_bet
 import socket
 import logging
 
+MSG_LEN = 8192
+
 class Server:
     def __init__(self, port, listen_backlog):
         # Initialize server socket
@@ -43,14 +45,13 @@ class Server:
         client socket will also be closed
         """
         try:
-            client_sock.send(self.send_res("READY").encode('utf-8'))
-            n = 1
-            
+            self.send_msg(client_sock, "READY")
+
             while True: 
                 msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
                 addr = client_sock.getpeername()
                 if msg != "DONE":
-                    logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]} | message number: {n}')
+                    logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]}')
                     result = process_bet(msg)
                     if result == None:
                         self._terminate_all_connections()
@@ -68,7 +69,7 @@ class Server:
     """receive message from client socket"""
     def recv_msg(self, sock):
         result = b''
-        remaining = 8192
+        remaining = MSG_LEN
         while remaining > 0:
             data = sock.recv(remaining)
             result += data
@@ -76,8 +77,18 @@ class Server:
         return result
 
     """creates message for client socket"""
-    def send_res(self, message):
-        return message.ljust(8192, 'X') + "\n"
+    def generate_res(self, message):
+        return message.ljust(MSG_LEN - 1, 'X') + "\n"
+
+    """send response message to client"""
+    def send_msg(self, sock, message):
+        response = self.generate_res(message).encode('utf-8')
+        remaining = MSG_LEN
+        while remaining > 0:
+            pos = MSG_LEN - remaining
+            nBytesSent = sock.send(response[pos:MSG_LEN])
+            logging.info(f'action: sending_response | result: success | message: {message} | bytes_sent: {nBytesSent}')
+            remaining -= nBytesSent
 
     def __accept_new_connection(self):
         """
@@ -106,12 +117,12 @@ class Server:
             self.__handle_client_connection(c)
         
         for c in self._connections:
-            c.send(self.send_res("DONE").encode('utf-8'))
+            self.send_msg(c, "DONE")
             c.close()
 
     def _terminate_all_connections(self):
         for c in self._connections:
-            c.send(self.send_res("ERROR").encode('utf-8'))
+            self.send_msg(c, "ERROR")
             c.close()
 
         self._connections = []

@@ -147,4 +147,19 @@ Una representación de protocolo se puede ver en la siguiente imagen:
 
 ![Alt text](img/exercise-6.png)
 
+## Reentrega
 
+## Ejercicio 5
+
+Correcciones realizadas para el Ejercicio 5:
+
+- Se modifico el enviar mensaje para que evite el Short Write
+- Se modifico el protocolo del Ejercicio 5 para que en caso de ingresar un texto de longitud mayor a 99 bytes el texto deba ser truncado, o sea que si la longitud es mayor a 99 el texto sera recordado a una longitud de 99 caracteres para poder enviar el mensaje
+
+## Ejercicio 6
+
+Correcciones realizadas para el Ejercicio 6:
+
+- Se agregaron todos los cambios realizados en la corrección del Ejercicio 5
+- Se crearon 5 archivos de configuración para cada cliente, se le pasa a cada cliente por variable de ambiente cual es el nombre de su respectivo archivo y el cliente lo abre para poder leerlo.
+- Ahora se abre el archivo y a medida que se leen las lineas del mismo se va armando el mensaje a enviar, en vez de leer todo el archivo y luego enviar los mensajes. Cuando se llegue a la cantidad de N apuestas del batch el mensaje se va a enviar. Si al estar concatenando apuestas se encuentra que al sumar una nueva apuesta se va a  superar los 8192 bytes (el tamaño del mensaje) entonces el mensaje se envia al servidor (sin agregar la apuesta que hubiera superado el tamaño del mensaje) aun si no se pudieron agregar las N apuestas al mensaje y guarda la apuesta que no pudo entrar para enviarla en un mensaje futuro.   

@@ -55,7 +55,7 @@ services:
     environment:
       - CLI_ID=3
       - CLI_LOG_LEVEL=DEBUG
-      - BATCH_SIZE=300
+      - BATCH_SIZE=3000
       - FILE_NAME=agency-3.csv
       - CONFIG=config-3.yaml
     networks:
