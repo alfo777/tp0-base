@@ -132,7 +132,7 @@ class Server:
         
         barrier.wait()
 
-        self.send_msg(client_sock, "START_LOTTERY")
+        self.send_msg(c, "START_LOTTERY")
         logging.info('action: lottery | result: pending')
         
         lock.acquire()
