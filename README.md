@@ -179,3 +179,10 @@ Para demostrarlo se puede levantar los 3 contenedores y comprobar que **test-ser
 
 Tanto en el cliente como en el servidor se agregó para que capturen las señales SIGTERM y cierren de manera gracefully. Se puede comprobar haciendo **docker stop server (client1) -t 1**.
 
+## Reentrega
+
+# Ejercicio 4
+
+Correcciones realizadas para el Ejercicio 4:
+
+- se usa el shutdown para cerrar de manera gracefully la conexion del server
