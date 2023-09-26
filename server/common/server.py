@@ -29,14 +29,12 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
         while not self._sigterm_recv:
             try:
                 self.__accept_new_connection()
                 if ( len(self._connections) == CANT_AGENCIES ):
                     self.process_clients()
-                # self.__handle_client_connection(client_sock)
+            
             except OSError as e:
                 break
 
@@ -50,22 +48,20 @@ class Server:
         client socket will also be closed
         """
         try:
-            client_sock.send(self.send_res("READY").encode('utf-8'))
-            n = 1
-            
+            self.send_msg(client_sock, "READY")
+
             while True: 
                 msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
                 addr = client_sock.getpeername()
                 if msg != "DONE":
-                    logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]} | message number: {n}')
-                    logging.info(f'action: processing_batch_message | result: pending | ip: {addr[0]} | message number: {n}')
+                    logging.info(f'action: receive_batch_message | result: success | ip: {addr[0]}')
+                    logging.info(f'action: processing_batch_message | result: pending | ip: {addr[0]}')
                     result = process_bet(msg)
                     if result == None:
                         self._terminate_all_connections()
                         break
                     else:
                         logging.info(f'action: processing_batch_message | result: success')
-                    n = n + 1
                 else:
                     break
         
@@ -84,8 +80,18 @@ class Server:
         return result
 
     """creates message for client socket"""
-    def send_res(self, message):
-        return message.ljust(MSG_LEN, 'X') + "\n"
+    def generate_res(self, message):
+        return message.ljust(MSG_LEN - 1, 'X') + "\n"
+
+    """send response message to client"""
+    def send_msg(self, sock, message):
+        response = self.generate_res(message).encode('utf-8')
+        remaining = MSG_LEN
+        while remaining > 0:
+            pos = MSG_LEN - remaining
+            nBytesSent = sock.send(response[pos:MSG_LEN])
+            logging.info(f'action: sending_response | result: success | message: {message} | bytes_sent: {nBytesSent}')
+            remaining -= nBytesSent
 
     def __accept_new_connection(self):
         """
@@ -114,7 +120,7 @@ class Server:
             self.__handle_client_connection(c)
         
         for c in self._connections:
-            c.send(self.send_res("START_LOTTERY").encode('utf-8'))
+            self.send_msg(c, "START_LOTTERY")
 
         logging.info('action: lottery | result: pending')
         
@@ -138,7 +144,7 @@ class Server:
             n = 1
             message = ""
             addr = client_sock.getpeername()
-            client_sock.send(self.send_res("READY").encode('utf-8'))
+            self.send_msg(client_sock, "READY")
             msg = self.recv_msg(client_sock).decode('utf-8').rstrip("X")
             logging.info(f'action: ready_message_sent | result: success | ip: {addr[0]}')
             agency = int(msg[0])
@@ -151,15 +157,15 @@ class Server:
                     message = message + winnerStr
                 
                 else:  
-                    client_sock.send(self.send_res(message).encode('utf-8'))
+                    self.send_msg(client_sock, message)
                     logging.info(f'action: sending_winners | result: done | message: {message}')
                     message = winnerStr
             
-            client_sock.send(self.send_res(message).encode('utf-8'))
+            self.send_msg(client_sock, message)
             logging.info(f'action: sending_winners | result: done | message: {message}')
             
             time.sleep(2)
-            client_sock.send(self.send_res("DONE").encode('utf-8'))
+            self.send_msg(client_sock, "DONE")
             logging.info(f'action: sending_done | result: done | ip: {addr[0]}')
         
         except OSError as e:
@@ -168,7 +174,7 @@ class Server:
 
     def _terminate_all_connections(self):
         for c in self._connections:
-            c.send(self.send_res("ERROR").encode('utf-8'))
+            self.send_msg(c, "ERROR")
             c.close()
 
         self._connections = []
